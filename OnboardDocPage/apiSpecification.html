@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ONBOARD - DOCUMENTATION</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" type="text/css" href="prettify.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  </head>
+  <body>
+    <h1 class="header">
+      <a href="index.html">ONBOARD</a>
+      <span>Platform for companies</span>
+    </h1>
+    <table class="navBar">
+      <tr>
+        <th><a href="index.html">Home</a></th>
+        <th><a href="apiSpecification.html">Especificação da API</a></th>
+        <th><a href="documentation.html">Documentação</a></th>
+        <th>
+          <a href="https://github.com/JoaoRodriguesIPCA/OnboardBackend"
+            >Github</a
+          >
+        </th>
+      </tr>
+    </table>
+
+    <h1>API SPECIFICATION</h1>
+    <img src="./src/table.JPG" alt="table" />
+    <p>
+      <b>CreateUser:</b> Este método pretenderá criar um utilizador através do
+      método POST, no qual enviará informação para os campos company_id, name,
+      email, password, e role_id de utilizador;
+    </p>
+
+    <p>
+      <b>getUser:</b> Este método pretenderá consultar a lista de utilizadores
+      através do método GET, através do seu id;
+    </p>
+
+    <p>
+      <b>updateUser:</b> Este método pretenderá consultar um determinado
+      utilizador e editar informação através do método PUT, através do seu id;
+    </p>
+
+    <p>
+      <b>deleteUser:</b> Este método pretenderá consultar um determinado
+      utilizador e apagá-lo através do método DELETE, através do seu id;
+    </p>
+
+    <p>
+      <b>getUserTransactions:</b> Este método pretenderá consultar as
+      tranasações de um determinado utilizador através do método GET, através do
+      seu id;
+    </p>
+
+    <p>
+      <b>createTransaction:</b> Este método pretenderá registar uma determinada
+      transação de um utilizador através do método POST, no qual enviará
+      informação para os campos date, category_id e amount;
+    </p>
+
+    <p>
+      <b>updateTransaction:</b> Este método pretenderá consultar uma determinada
+      transação do utilizador e editar informação da mesma através do método
+      PUT, através do seu id de transação;
+    </p>
+
+    <p>
+      <b>deleteTransaction:</b> Este método pretenderá consultar uma determinada
+      transação do utilizador e apagá-la através do método DELETE, através do
+      seu id de transação;
+    </p>
+
+    <p>
+      <b>doSignup:</b> Este método pretenderá criar um utilizador através do
+      método POST, no qual enviará informação para os campos company_id, name,
+      email, password, e role_id de administrador;
+    </p>
+
+    <p>
+      <b>doSignin:</b> Este método pretenderá consultar um determinado
+      utilizador através do método GET, através do seu id;
+    </p>
+  </body>
+</html>

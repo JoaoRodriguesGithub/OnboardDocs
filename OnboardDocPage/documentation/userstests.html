@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>ONBOARD - DOCUMENTATION</title>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+   <link rel="stylesheet" type="text/css" href="../prettify.css"/>
+   <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico"/>
+   <script type="text/javascript" src="../highlight.pack.js"></script>
+   <script type="text/javascript">hljs.initHighlightingOnLoad()</script>
+</head>
+<body>
+<h1 class="header">
+   <a href="../index.html">ONBOARD</a>
+   <span>Platform for companies</span>
+</h1>
+<table class="navBar">
+   <tr>
+     <th><a href="apiSpecification.html">Especificação da API</a></th>
+     <th><a href="../documentation.html">Documentação</a></th>
+     <th><a href="https://github.com/JoaoRodriguesIPCA/OnboardBackend">Github</a></th>
+   </tr>
+ </table>
+<h2 id="Test1">
+   <a href="#Test1">Test 1 – List all users</a>
+</h2>
+<p>
+   Este teste consiste em listar todos os utilizadores, no qual é necessário fazer um pedido GET, e é expectável
+   receber uma resposta com o status 200 bem como uma resposta maior do que 0.
+</p>
+<pre><code>
+   test('Test #1 - List all users', () => {
+      return request(app).get(MAIN_ROUTE)
+        .set('authorization', `bearer ${user.token}`)
+        .then((res) => {
+          expect(res.status).toBe(200);
+          expect(res.body.length).toBeGreaterThan(0);
+        });
+    });
+</code></pre>
+
+<h2 id="Test2">
+   <a href="#Test2">Test 2 – Insert users</a>
+</h2>
+<p>
+   Este teste consiste em inserir utilizadores na base de dados, no qual é necessário fazer um pedido POST, e é
+expectável receber uma resposta com o status 201. Também é necessário verificar que no body vá a informação do
+objeto enviado, isto é, a propriedade name, bem como é necessário verificar que a password não esteja visível no body
+por questões de segurança.
+</p>
+<pre><code>
+   test('Test #2 - Insert users', () => {
+      return request(app).post(MAIN_ROUTE)
+        .send({
+          company_id: '1', name: 'João Rodrigues', email, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        })
+        .set('authorization', `bearer ${user.token}`)
+        .then((res) => {
+          expect(res.status).toBe(201);
+          expect(res.body.name).toBe('João Rodrigues');
+          expect(res.body).not.toHaveProperty('password');
+        });
+    });
+</code></pre>
+
+<h2 id="Test3">
+   <a href="#Test3">Test 3 – Insert user without attributes...</a>
+</h2>
+<p>
+   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo company. Para
+tal é necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário
+passar uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo
+company é obrigatório.
+</p>
+<pre><code>
+   describe(' Test #3 - Insert user without attributes...', () => {
+      const testTemplate = (newData, errorMessage) => {
+        return request(app).post(MAIN_ROUTE)
+          .send({
+            company_id: 1, name: 'João Rodrigues # Inserts', email, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2', ...newData,
+          })
+          .set('authorization', `bearer ${user.token}`)
+          .then((res) => {
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(errorMessage);
+          });
+      };
+    
+      test('Test #3.1 - Insert user without company', () => testTemplate({ company_id: null }, 'Company is a mandatory attribute'));
+      test('Test #3.2 - Insert user without name', () => testTemplate({ name: null }, 'Name is a mandatory attribute'));
+      test('Test #3.3 - Insert user without email', () => testTemplate({ email: null }, 'Email is a mandatory attribute'));
+      test('Test #3.4 - Insert user without password', () => testTemplate({ password: null }, 'Password is a mandatory attribute'));
+      test('Test #3.5 - Insert user without role', () => testTemplate({ role_id: null }, 'Role is a mandatory attribute'));
+    });
+</code></pre>
+
+<h2 id="Test4">
+   <a href="#Test4">Test 4 – Save encryped password</a>
+</h2>
+<p>
+   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo name. Para tal é
+necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
+uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo name é
+obrigatório.
+</p>
+<pre><code>
+   test('Test #4 - Save encryped password', async () => {
+      const res = await request(app).post(MAIN_ROUTE)
+        .send({
+          company_id: '1', name: 'João Rodrigues #encrypted pwd', email: `${Date.now()}@tester.com`, password: '123456', role_id: '2',
+        })
+        .set('authorization', `bearer ${user.token}`);
+      expect(res.status).toBe(201);
+    
+      const { id } = res.body;
+      const userDB = await app.services.user.findOne({ id });
+      expect(userDB.password).not.toBeUndefined();
+      expect(userDB.password).not.toBe('123456');
+    });
+</code></pre>
+
+<h2 id="Test5">
+   <a href="#Test5">Test 5 – Insert duplicated users</a>
+</h2>
+<p>
+   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo email. Para tal é
+necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
+uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo email é
+obrigatório.
+</p>
+<pre><code>
+   test('Test #5 - Insert duplicated users', () => {
+      return request(app).post(MAIN_ROUTE)
+        .send({
+          company_id: '1', name: 'João Rodrigues', email, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        })
+        .set('authorization', `bearer ${user.token}`)
+        .then((res) => {
+          expect(res.status).toBe(400);
+          expect(res.body.error).toBe('Email duplicated on BD');
+        });
+    });
+</code></pre>
+
+<h2 id="Test6">
+   <a href="#Test6">Test 6 – Update user</a>
+</h2>
+<p>
+   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo email. Para tal é
+necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
+uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo password
+é obrigatório.
+</p>
+<pre><code>
+   test('Test #6 - Update user', () => {
+      const email2 = `${Date.now()}@tester.com`;
+      return app.db('users')
+        .insert({
+          company_id: '1', name: 'João Rodrigues - Update', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        }, ['id'])
+        .then((usr) => request(app).put(`${MAIN_ROUTE}/${usr[0].id}`)
+          .set('authorization', `bearer ${user.token}`)
+          .send({ name: 'User updated' }))
+        .then((res) => {
+          expect(res.status).toBe(200);
+          expect(res.body.name).toBe('User updated');
+        });
+    });
+</code></pre>
+
+<h2 id="Test7">
+   <a href="#Test7">Test 7 – Delete user</a>
+</h2>
+<p>
+   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo role. Para tal é
+necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
+uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo role é
+obrigatório.
+</p>
+<pre><code>
+   test('Test #7 - Delete user', () => {
+      const email2 = `${Date.now()}@tester.com`;
+      return app.db('users')
+        .insert({
+          company_id: '1', name: 'João Rodrigues - Remove', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        }, ['id'])
+        .then((usr) => request(app).delete(`${MAIN_ROUTE}/${usr[0].id}`)
+          .set('authorization', `bearer ${user.token}`))
+        .then((res) => {
+          expect(res.status).toBe(204);
+        });
+    });
+</code></pre>
+
+<h2 id="Test8">
+   <a href="#Test8">Test 8 – Restrict the access from another user</a>
+</h2>
+<p>
+   Este teste consiste em inserir um utilizador na base de dados com todos os campos obrigatórios. Para tal é
+necessário fazer um pedido POST, e é expectável com a implementação do token, tenhamos uma resposta 201. Também
+é expectável que quando recebermos a resposta da base dados do utilizador, que a password esteja definida, mas que
+esta não venha no formato original do utilizador, mas sim no formato encriptado.
+</p>
+<pre><code>
+   test.skip('Test #8 - Restrict the access from another user', () => {
+      const email2 = `${Date.now()}@tester.com`;
+      return app.db('users')
+        .insert({
+          company_id: '1', name: 'Tiago Rodrigues - #User2', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        }, ['id'])
+        .then((usr) => request(app).get(`${MAIN_ROUTE}/${usr[0].id}`)
+          .set('authorization', `bearer ${user.token}`))
+        .then((res) => {
+          expect(res.status).toBe(401);
+          expect(res.body.error).toBe('Does not have access to the requested resource');
+        });
+    });
+</code></pre>
+
+<h2 id="Test9">
+   <a href="#Test9">Test 9 – Restrict edition of another user</a>
+</h2>
+<p>
+   Este teste consiste em inserir um utilizador na base de dados com todos os campos obrigatórios. Para tal é
+necessário fazer um pedido POST, e é expectável que tenhamos uma resposta 400. Também é necessário passar uma
+mensagem de erro para identificar que no pedido houve um problema, para identificar que foi um problema de email
+duplicado na base de dados.
+</p>
+<pre><code>
+   test.skip('Test #9 - Restrict edition of another user', () => {
+      return app.db('users')
+        .insert({ id: user2.id, name: 'Tiago Rodrigues #User2' }, ['id'])
+        .then((usr) => request(app).put(`${MAIN_ROUTE}/${usr[0].id}`)
+          .set('authorization', `bearer ${user.token}`))
+        .then((res) => {
+          expect(res.status).toBe(403);
+          expect(res.body.error).toBe('Does not have access to the requested resource');
+        });
+    });
+</code></pre>
+
+<h2 id="Test10">
+   <a href="#Test10">Test 10 – Restrict deletion of another user</a>
+</h2>
+<p>
+   Este teste consiste em atualizar um utilizador na base de dados com todos os campos obrigatórios. Para tal é
+necessário fazer um insert deste objeto, identificá-lo por Id e através do PUT enviar a informação a atualizar nesse objeto.
+Com isto é expectável recebermos uma resposta com o status 200;
+</p>
+<pre><code>
+   test.skip('Test #10 - Restrict deletion of another user', () => {
+      return app.db('users')
+        .insert({ id: user2.id, name: 'Tiago Rodrigues #User2' }, ['id'])
+        .then((usr) => request(app).delete(`${MAIN_ROUTE}/${usr[0].id}`)
+          .set('authorization', `bearer ${user.token}`))
+        .then((res) => {
+          expect(res.status).toBe(403);
+          expect(res.body.error).toBe('Does not have access to the requested resource');
+        });
+    });
+</code></pre>
+
+<h2 id="Test11">
+   <a href="#Test11">Test 11 – Insert an user with the right role_id permitions</a>
+</h2>
+<p>
+   Este teste consiste em apagar um utilizador na base de dados com todos os campos obrigatórios. Para tal é
+necessário fazer um insert deste objeto, identificá-lo por Id e através do DELETE. Com isto é expectável recebermos uma
+resposta com o status 204;
+</p>
+<pre><code>
+   test.skip('Test #11 - Insert an user with the right role_id permitions', () => {
+      request(app).post(MAIN_ROUTE)
+        .insert({ name: 'Jorge Rodrigues #Role 1', role_id: '1' })
+        .set('authorization', `bearer ${user.token}`)
+        .then((res) => {
+          expect(res.status).toBe(201);
+          expect(res.body[0].role_id).toBe('1');
+        });
+    });
+</code></pre>
+
+<h2 id="Test12">
+   <a href="#Test12">Test 12 – Insert an user without the role permitions</a>
+</h2>
+<p>
+   Este teste consiste em apagar um utilizador na base de dados com todos os campos obrigatórios. Para tal é
+necessário fazer um insert deste objeto, identificá-lo por Id e através do DELETE. Com isto é expectável recebermos uma
+resposta com o status 204;
+</p>
+<pre><code>
+   test.skip('Test #12 - Insert an user without the role permitions', () => {
+      return request(app).post(MAIN_ROUTE)
+        .send({
+          company_id: '1', name: 'João Rodrigues #Insert', email: 'joaorodrigues@onboard.com', password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        })
+        .set('authorization', `bearer ${user.token}`)
+        .then((res) => {
+          expect(res.status).toBe(403);
+          expect(res.body.error).toBe('This user does not have permition');
+        });
+    });
+</code></pre>
+
+<h2 id="Test13">
+   <a href="#Test13">Test 13 – Restrict delete permitions for roles</a>
+</h2>
+<p>
+   Este teste consiste em restringir que um determinado utilizador tenha permissão para editar a informação de
+outro utilizador. Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro
+utilizador. Ao efetuar o acesso através do método PUT para edição, é expectável que tenhamos uma reposta do tipo
+403. Também é necessário passar uma mensagem de erro para identificar que no caso de haver um problema no pedido,
+seja identificado qual é o problema associado, que neste caso é o utilizador não tem acesso ao recurso solicitado.
+</p>
+<pre><code>
+   test.skip('Test #13 - Restrict delete permitions for roles', () => {
+      return app.db('users')
+        .insert({
+          company_id: '1', name: 'João Rodrigues #Insert', email: 'joaorodrigues@onboard.com', password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        }, ['id'])
+        .then((usr) => request(app).delete(`${MAIN_ROUTE}/${usr[0].id}`)
+          .set('authorization', `bearer ${user.token}`))
+        .then((res) => {
+          expect(res.status).toBe(403);
+          expect(res.body.error).toBe('Does not have the permition to the requested resource');
+        });
+    });
+</code></pre>
+</body>
+</html>
