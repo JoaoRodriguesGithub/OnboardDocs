@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+   <title>ONBOARD - DOCUMENTATION</title>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+   <link rel="stylesheet" type="text/css" href="../prettify.css"/>
+   <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico"/>
+   <script type="text/javascript" src="../highlight.pack.js"></script>
+   <script type="text/javascript">hljs.initHighlightingOnLoad()</script>
+</head>
+<body>
+<h1 class="header">
+   <a href="../index.html">ONBOARD</a>
+   <span>Platform for companies</span>
+</h1>
+<table class="navBar">
+   <tr>
+      <th><a href="index.html">Home</a></th>
+      <th><a href="apiSpecification.html">Especificação da API</a></th>
+      <th><a href="documentation.html">Documentação</a></th>
+      <th><a href="https://github.com/JoaoRodriguesIPCA/OnboardBackend">Github</a></th>
+   </tr>
+ </table>
+
+<h2 id="Test1">
+   <a href="#Test1">Test #1 - List only user transactions</a>
+</h2>
+<p>
+   Este teste consiste em listar as transações de um utilizador. Para tal é necessário fazermos insert de dois
+   utilizadores distinguidos por user.id e user2.id e fazer um pedido GET com o token do user. Assim é expectável
+   recebermos um status 200, ter uma resposta no body com o comprimento de 1 e verificar que a primeira posição da
+   propriedade amount é de facto a correspondente ao user.
+</p>
+<pre><code>
+   test('Test #1 - List only user transactions', () => {
+      return request(app).get(MAIN_ROUTE)
+        .set('authorization', `bearer ${TOKEN}`)
+        .then((res) => {
+          expect(res.status).toBe(200);
+          expect(res.body).toHaveLength(2);
+          expect(res.body[0].amount).toBe('6.00');
+        });
+    });
+</code></pre>
+
+<h2 id="Test2">
+   <a href="#Test2">Test #2 - Insert user transactions</a>
+</h2>
+<p>
+   Este teste consiste em inserir uma transação de um utilizador. Para tal é necessário fazermos insert de uma
+   determinada transação de um utilizador através de um pedido POST com o token do user. Assim é expectável
+   recebermos uma resposta com o status 201, ter uma verificação que o user_id do body corresponde ao id do user e que
+   a propriedade amount é correspondente ao do utilizador.
+</p>
+<pre><code>
+   test('Test #2 - Insert user transactions', () => {
+      return request(app).post(MAIN_ROUTE)
+        .set('authorization', `bearer ${TOKEN}`)
+        .send({
+          user_id: user.id, date: new Date(), category_id: '1', amount: 60,
+        })
+        .then((res) => {
+          expect(res.status).toBe(201);
+          expect(res.body.user_id).toBe(user.id);
+          expect(res.body.amount).toBe('60.00');
+        });
+    });
+</code></pre>
+
+<h2 id="Test3">
+   <a href="#Test3">Test #3 - Validation of transaction creation</a>
+</h2>
+<p>
+   Este teste consiste em inserir uma determinada transação de um utilizador na base de dados. Para tal serão
+   feitas tentativas de inserção sem cada um dos campos obrigatórios, isto é, a date, a category_id e o ammount, através
+   do método POST.O expectável será receber uma resposta com o status 400. Também é necessário passar uma
+   mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo de cada um
+   destes campos é obrigatório.
+</p>
+<pre><code>
+   describe('Test #3 - Validation of transaction creation', () => {
+      const testTemplate = (newData, errorMessage) => {
+        return request(app).post(MAIN_ROUTE)
+          .set('authorization', `bearer ${TOKEN2}`)
+          .send({
+            user_id: 10002, date: new Date(), category_id: '1', amount: 60, ...newData,
+          })
+          .then((res) => {
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(errorMessage);
+          });
+      };
+      test('Test #3.1 - Insert transaction without Date', () => testTemplate({ date: null }, 'DATE is a mandatory attribute'));
+    
+      test('Test #3.2 - Insert transaction without Category', () => testTemplate({ category_id: null }, 'CATEGORY is a mandatory attribute'));
+    
+      test('Test #3.3 - Insert transaction without Amount', () => testTemplate({ amount: null }, 'AMOUNT is a mandatory attribute'));
+    });
+</code></pre>
+
+<h2 id="Test4">
+   <a href="#Test4">Test #4 - List user transactions by transaction id</a>
+</h2>
+<p>
+   Este teste consiste em listar as transações de um utilizador por transaction_id. Para tal é necessário fazermos
+   insert de uma transação e fazer um pedido GET com o token do user. Assim é expectável recebermos um status 200, ter
+   uma resposta no body com o primeiro resultado e que o amount seja de acordo com a transação enviada.
+   Teste 5
+</p>
+<pre><code>
+   test('Test #4 - List user transactions by transaction id', () => {
+      return app.db('transactions').insert({
+        user_id: 10000, date: new Date(), category_id: '1', amount: 60,
+      }, ['id'])
+        .then((result) => request(app).get(`${MAIN_ROUTE}/${result[0].id}`)
+          .set('authorization', `bearer ${TOKEN}`)
+          .then((res) => {
+            expect(res.status).toBe(200);
+            expect(res.body.id).toBe(result[0].id);
+            expect(res.body.amount).toBe('60.00');
+          }));
+    });
+</code></pre>
+
+<h2 id="Test5">
+   <a href="#Test5">Test #5 - Update transaction</a>
+</h2>
+<p>
+   Este teste consiste em atualizar uma transação na base de dados com todos os campos obrigatórios. Para tal é
+   necessário fazer um insert deste objeto, identificá-lo por Id e através do PUT enviar a informação a atualizar nesse objeto.
+   Com isto é expectável recebermos uma resposta com o status 200, que a propriedade id no body da resposta seja a
+   mesmo id do resultado na posição 0 de resultados e que a propriedade amount no body da resposta seja a mesma do
+   objeto enviado;
+</p>
+<pre><code>
+   test.skip('Test #5 - Update transaction', () => {
+      return app.db('transactions').insert({
+        user_id: user.id, date: new Date(), category_id: '1', amount: 60,
+      }, ['id'])
+        .then((result) => request(app).put(`${MAIN_ROUTE}/${result[0].id}`)
+          .set('authorization', `bearer ${user.token}`)
+          .send({ amount: '100.00' })
+          .then((res) => {
+            expect(res.status).toBe(200);
+            expect(res.body.id).toBe(result[0].id);
+            expect(res.body.amount).toBe('100.00');
+          }));
+    });
+</code></pre>
+
+<h2 id="Test6">
+   <a href="#Test6">Test #6 - Remove transaction</a>
+</h2>
+<p>
+   Este teste consiste em apagar uma transação na base de dados. Para tal é necessário fazer um insert deste
+   objeto com todos os campos obrigatórios., identificá-lo por Id e através do DELETE fazer a operação. Com isto é
+   expectável recebermos uma resposta com o status 204;
+</p>
+<pre><code>
+   test.skip('Test #6 - Remove transaction ', () => {
+      return app.db('transactions').insert({
+        user_id: user.id, date: new Date(), category_id: '1', amount: 60,
+      }, ['id'])
+        .then((result) => request(app).delete(`${MAIN_ROUTE}/${result[0].id}`)
+          .set('authorization', `bearer ${user.token}`)
+          .then((res) => {
+            expect(res.status).toBe(204);
+          }));
+    });
+</code></pre>
+
+<h2 id="Test7">
+   <a href="#Test7">Test #7 - Access transaction from another user</a>
+</h2>
+<p>
+   Este teste consiste em restringir que um determinado utilizador tenha acesso a transações de outro utilizador.
+   Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro utilizador. Ao
+   efetuar o acesso através do método GET, é expectável que tenhamos uma reposta do tipo 403. Também é necessário
+   passar uma mensagem de erro para identificar que no caso de haver um problema no pedido, seja identificado qual é
+   o problema associado, que neste caso é que o recurso não pertence ao utilizador.
+</p>
+<pre><code>
+   test.skip('Test #7 - Access transaction from another user', () => {
+      return app.db('transactions').insert({
+        user_id: user2.id, date: new Date(), category_id: '1', amount: 60,
+      }, ['id'])
+        .then((result) => request(app).delete(`${MAIN_ROUTE}/${result[0].id}`)
+          .set('authorization', `bearer ${user.token}`)
+          .then((res) => {
+            expect(res.status).toBe(403);
+            expect(res.body.error).toBe('This resource does not belong to this user');
+          }));
+    });
+</code></pre>
+
+<h2 id="Test8">
+   <a href="#Test8">Test #8 - Transaction ammount must be positive</a>
+</h2>
+<p>
+   Este teste consiste em garantir que o valor da transação é sempre positivo. Para tal é necessário inserir uma
+   transação negativa com o send. Ao efetuar o envio através do método POST, é expectável que tenhamos uma reposta
+      do tipo 201, que o id de utilizador presente no body da resposta seja o mesmo do objeto enviado e que o amount seja
+com valor positivo.
+</p>
+<pre><code>
+   test.skip('Test #8 - Transaction ammount must be positive', () => {
+      return request(app).post(MAIN_ROUTE)
+        .set('authorization', `bearer ${user.token}`)
+        .send({
+          user_id: user.id, date: new Date(), category_id: '1', amount: -60,
+        })
+        .then((res) => {
+          expect(res.status).toBe(201);
+          expect(res.body.user_id).toBe(user.id);
+          expect(res.body.amount).toBe('60.00');
+        });
+    });
+</code></pre>
+
+</body>
+</html>
