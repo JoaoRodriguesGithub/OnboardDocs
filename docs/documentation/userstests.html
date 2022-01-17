@@ -69,7 +69,7 @@ por questões de segurança.
    Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo company. Para
 tal é necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário
 passar uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo
-company é obrigatório.
+company, name, email, password e role é obrigatório.
 </p>
 <pre><code>
    describe(' Test #3 - Insert user without attributes...', () => {
@@ -97,10 +97,10 @@ company é obrigatório.
    <a href="#Test4">Test 4 – Save encryped password</a>
 </h2>
 <p>
-   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo name. Para tal é
-necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
-uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo name é
-obrigatório.
+   Este teste consiste em inserir um utilizador na base de dados com todos os campos obrigatórios. 
+   Para tal é necessário fazer um pedido POST, e é expectável com a implementação do token, tenhamos uma resposta 201. 
+   Também é expectável que quando recebermos a resposta da base dados do utilizador, que a password esteja definida, 
+   mas que esta não venha no formato original do utilizador, mas sim no formato encriptado.
 </p>
 <pre><code>
    test('Test #4 - Save encryped password', async () => {
@@ -122,10 +122,10 @@ obrigatório.
    <a href="#Test5">Test 5 – Insert duplicated users</a>
 </h2>
 <p>
-   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo email. Para tal é
-necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
-uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo email é
-obrigatório.
+   Este teste consiste em inserir um utilizador na base de dados com todos os campos obrigatórios. 
+   Para tal é necessário fazer um pedido POST, e é expectável que tenhamos uma resposta 400. 
+   Também é necessário passar uma mensagem de erro para identificar que no pedido houve um problema, 
+   para identificar que foi um problema de email duplicado na base de dados.
 </p>
 <pre><code>
    test('Test #5 - Insert duplicated users', () => {
@@ -145,21 +145,15 @@ obrigatório.
    <a href="#Test6">Test 6 – Update user</a>
 </h2>
 <p>
-   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo email. Para tal é
-necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
-uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo password
-é obrigatório.
+   Este teste consiste em atualizar um utilizador na base de dados com todos os campos obrigatórios. 
+   Para tal é necessário fazer um insert deste objeto, identificá-lo por Id e através do PUT enviar a informação a atualizar nesse objeto. 
+   Com isto é expectável recebermos uma resposta com o status 200;
 </p>
 <pre><code>
    test('Test #6 - Update user', () => {
-      const email2 = `${Date.now()}@tester.com`;
-      return app.db('users')
-        .insert({
-          company_id: '1', name: 'João Rodrigues - Update', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
-        }, ['id'])
-        .then((usr) => request(app).put(`${MAIN_ROUTE}/${usr[0].id}`)
-          .set('authorization', `bearer ${user.token}`)
-          .send({ name: 'User updated' }))
+      return request(app).put(`${MAIN_ROUTE}/10003`)
+        .set('authorization', `bearer ${TOKEN3}`)
+        .send({ name: 'User updated' })
         .then((res) => {
           expect(res.status).toBe(200);
           expect(res.body.name).toBe('User updated');
@@ -171,20 +165,14 @@ uma mensagem de erro para identificar que no pedido houve um problema, pois o pr
    <a href="#Test7">Test 7 – Delete user</a>
 </h2>
 <p>
-   Este teste consiste em inserir um utilizador na base de dados sem o preenchimento do campo role. Para tal é
-necessário fazer um pedido POST, e é expectável receber uma resposta com o status 400. Também é necessário passar
-uma mensagem de erro para identificar que no pedido houve um problema, pois o preenchimento do campo role é
-obrigatório.
+   Este teste consiste em apagar um utilizador na base de dados com todos os campos obrigatórios. 
+   Para tal é necessário fazer um insert deste objeto, identificá-lo por Id e através do DELETE. 
+   Com isto é expectável recebermos uma resposta com o status 204;
 </p>
 <pre><code>
    test('Test #7 - Delete user', () => {
-      const email2 = `${Date.now()}@tester.com`;
-      return app.db('users')
-        .insert({
-          company_id: '1', name: 'João Rodrigues - Remove', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
-        }, ['id'])
-        .then((usr) => request(app).delete(`${MAIN_ROUTE}/${usr[0].id}`)
-          .set('authorization', `bearer ${user.token}`))
+      return request(app).delete(`${MAIN_ROUTE}/10003`)
+        .set('authorization', `bearer ${TOKEN3}`)
         .then((res) => {
           expect(res.status).toBe(204);
         });
@@ -195,23 +183,24 @@ obrigatório.
    <a href="#Test8">Test 8 – Restrict the access from another user</a>
 </h2>
 <p>
-   Este teste consiste em inserir um utilizador na base de dados com todos os campos obrigatórios. Para tal é
-necessário fazer um pedido POST, e é expectável com a implementação do token, tenhamos uma resposta 201. Também
-é expectável que quando recebermos a resposta da base dados do utilizador, que a password esteja definida, mas que
-esta não venha no formato original do utilizador, mas sim no formato encriptado.
+   Este teste consiste em restringir que um determinado utilizador tenha acesso a informação de outro utilizador. 
+   Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro utilizador. 
+   Ao efetuar o acesso através do método GET, é expectável que tenhamos uma reposta do tipo 403. 
+   Também é necessário passar uma mensagem de erro para identificar que no caso de haver um problema no pedido, 
+   seja identificado qual é o problema associado, que neste caso é o utilizador não tem acesso ao recurso solicitado.
 </p>
 <pre><code>
-   test.skip('Test #8 - Restrict the access from another user', () => {
+   test('Test #8 - Restrict the access from another user', () => {
       const email2 = `${Date.now()}@tester.com`;
       return app.db('users')
         .insert({
           company_id: '1', name: 'Tiago Rodrigues - #User2', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
         }, ['id'])
         .then((usr) => request(app).get(`${MAIN_ROUTE}/${usr[0].id}`)
-          .set('authorization', `bearer ${user.token}`))
+          .set('authorization', `bearer ${user2.token}`))
         .then((res) => {
-          expect(res.status).toBe(401);
-          expect(res.body.error).toBe('Does not have access to the requested resource');
+          expect(res.status).toBe(403);
+          expect(res.body.error).toBe('Access denied');
         });
     });
 </code></pre>
@@ -220,20 +209,24 @@ esta não venha no formato original do utilizador, mas sim no formato encriptado
    <a href="#Test9">Test 9 – Restrict edition of another user</a>
 </h2>
 <p>
-   Este teste consiste em inserir um utilizador na base de dados com todos os campos obrigatórios. Para tal é
-necessário fazer um pedido POST, e é expectável que tenhamos uma resposta 400. Também é necessário passar uma
-mensagem de erro para identificar que no pedido houve um problema, para identificar que foi um problema de email
-duplicado na base de dados.
+   Este teste consiste em restringir que um determinado utilizador tenha permissão para editar a informação de outro utilizador. 
+   Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro utilizador. 
+   Ao efetuar o acesso através do método PUT para edição, é expectável que tenhamos uma reposta do tipo 403. 
+   Também é necessário passar uma mensagem de erro para identificar que no caso de haver um problema no pedido, 
+   seja identificado qual é o problema associado, que neste caso é o utilizador não tem acesso ao recurso solicitado.
 </p>
 <pre><code>
-   test.skip('Test #9 - Restrict edition of another user', () => {
+   test('Test #9 - Restrict edition of another user', () => {
+      const email2 = `${Date.now()}@tester.com`;
       return app.db('users')
-        .insert({ id: user2.id, name: 'Tiago Rodrigues #User2' }, ['id'])
+        .insert({
+          company_id: '1', name: 'Tiago Rodrigues - #User2', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        }, ['id'])
         .then((usr) => request(app).put(`${MAIN_ROUTE}/${usr[0].id}`)
           .set('authorization', `bearer ${user.token}`))
         .then((res) => {
           expect(res.status).toBe(403);
-          expect(res.body.error).toBe('Does not have access to the requested resource');
+          expect(res.body.error).toBe('Access denied');
         });
     });
 </code></pre>
@@ -242,77 +235,64 @@ duplicado na base de dados.
    <a href="#Test10">Test 10 – Restrict deletion of another user</a>
 </h2>
 <p>
-   Este teste consiste em atualizar um utilizador na base de dados com todos os campos obrigatórios. Para tal é
-necessário fazer um insert deste objeto, identificá-lo por Id e através do PUT enviar a informação a atualizar nesse objeto.
-Com isto é expectável recebermos uma resposta com o status 200;
+   Este teste consiste em restringir que um determinado utilizador tenha permissão para apagar a informação de outro utilizador. 
+   Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro utilizador. 
+   Ao efetuar o acesso através do método DELETE para apagar, é expectável que tenhamos uma reposta do tipo 403. 
+   Também é necessário passar uma mensagem de erro para identificar que no caso de haver um problema no pedido, 
+   seja identificado qual é o problema associado, que neste caso é o utilizador não tem acesso ao recurso solicitado.
 </p>
 <pre><code>
-   test.skip('Test #10 - Restrict deletion of another user', () => {
+   test('Test #10 - Restrict deletion of another user', () => {
+      const email2 = `${Date.now()}@tester.com`;
       return app.db('users')
-        .insert({ id: user2.id, name: 'Tiago Rodrigues #User2' }, ['id'])
+        .insert({
+          company_id: '1', name: 'Tiago Rodrigues - #User2', email: email2, password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        }, ['id'])
         .then((usr) => request(app).delete(`${MAIN_ROUTE}/${usr[0].id}`)
           .set('authorization', `bearer ${user.token}`))
         .then((res) => {
           expect(res.status).toBe(403);
-          expect(res.body.error).toBe('Does not have access to the requested resource');
+          expect(res.body.error).toBe('Access denied');
         });
     });
 </code></pre>
 
 <h2 id="Test11">
-   <a href="#Test11">Test 11 – Insert an user with the right role_id permitions</a>
+   <a href="#Test11">Test 11 – Insert an user without the role permitions</a>
 </h2>
 <p>
-   Este teste consiste em apagar um utilizador na base de dados com todos os campos obrigatórios. Para tal é
-necessário fazer um insert deste objeto, identificá-lo por Id e através do DELETE. Com isto é expectável recebermos uma
-resposta com o status 204;
+   Este teste consiste em restringir que um determinado utilizador tenha permissão para apagar a informação de outro utilizador. 
+   Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro utilizador. 
+   Ao efetuar o acesso através do método DELETE para apagar, é expectável que tenhamos uma reposta do tipo 403. 
+   Também é necessário passar uma mensagem de erro para identificar que no caso de haver um problema no pedido, 
+   seja identificado qual é o problema associado, que neste caso é o utilizador não tem acesso ao recurso solicitado
 </p>
 <pre><code>
-   test.skip('Test #11 - Insert an user with the right role_id permitions', () => {
-      request(app).post(MAIN_ROUTE)
-        .insert({ name: 'Jorge Rodrigues #Role 1', role_id: '1' })
-        .set('authorization', `bearer ${user.token}`)
+   test('Test #11 - Insert an user without the role permitions', () => {
+      return request(app).post(MAIN_ROUTE)
+        .send({
+          company_id: '1', name: 'João Rodrigues #Insert', email: 'joaorodrigues@onboard.com', password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
+        })
+        .set('authorization', `bearer ${user2.token}`)
         .then((res) => {
-          expect(res.status).toBe(201);
-          expect(res.body[0].role_id).toBe('1');
+          expect(res.status).toBe(403);
+          expect(res.body.error).toBe('Access denied');
         });
     });
 </code></pre>
 
 <h2 id="Test12">
-   <a href="#Test12">Test 12 – Insert an user without the role permitions</a>
+   <a href="#Test12">Test 12 – Restrict delete permitions for roles</a>
 </h2>
 <p>
-   Este teste consiste em apagar um utilizador na base de dados com todos os campos obrigatórios. Para tal é
-necessário fazer um insert deste objeto, identificá-lo por Id e através do DELETE. Com isto é expectável recebermos uma
-resposta com o status 204;
+   Este teste consiste em restringir que um determinado utilizador tenha permissão para apagar a informação de outro utilizador. 
+   Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro utilizador. 
+   Ao efetuar o acesso através do método DELETE para apagar, é expectável que tenhamos uma reposta do tipo 403. 
+   Também é necessário passar uma mensagem de erro para identificar que no caso de haver um problema no pedido, 
+   seja identificado qual é o problema associado, que neste caso é o utilizador não tem acesso ao recurso solicitado
 </p>
 <pre><code>
-   test.skip('Test #12 - Insert an user without the role permitions', () => {
-      return request(app).post(MAIN_ROUTE)
-        .send({
-          company_id: '1', name: 'João Rodrigues #Insert', email: 'joaorodrigues@onboard.com', password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',
-        })
-        .set('authorization', `bearer ${user.token}`)
-        .then((res) => {
-          expect(res.status).toBe(403);
-          expect(res.body.error).toBe('This user does not have permition');
-        });
-    });
-</code></pre>
-
-<h2 id="Test13">
-   <a href="#Test13">Test 13 – Restrict delete permitions for roles</a>
-</h2>
-<p>
-   Este teste consiste em restringir que um determinado utilizador tenha permissão para editar a informação de
-outro utilizador. Para tal é necessário inserir um determinado utilizador2 e passar o token de autenticação de um outro
-utilizador. Ao efetuar o acesso através do método PUT para edição, é expectável que tenhamos uma reposta do tipo
-403. Também é necessário passar uma mensagem de erro para identificar que no caso de haver um problema no pedido,
-seja identificado qual é o problema associado, que neste caso é o utilizador não tem acesso ao recurso solicitado.
-</p>
-<pre><code>
-   test.skip('Test #13 - Restrict delete permitions for roles', () => {
+   test.skip('Test #12 - Restrict delete permitions for roles', () => {
       return app.db('users')
         .insert({
           company_id: '1', name: 'João Rodrigues #Insert', email: 'joaorodrigues@onboard.com', password: '$2a$10$ieGCSPJoXUdecZwrrwdRbua7an/AizIC1qBREyOHuPSXTZNk1atti', role_id: '2',

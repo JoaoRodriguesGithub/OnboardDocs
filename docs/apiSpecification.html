@@ -25,7 +25,7 @@
     </table>
 
     <h1>API SPECIFICATION</h1>
-    <img src="./src/table.JPG" alt="table" />
+    <img src="./src/table.JPG" alt="table" width="800px" />
     <p>
       <b>CreateUser:</b> Este método pretenderá criar um utilizador através do
       método POST, no qual enviará informação para os campos company_id, name,
@@ -33,8 +33,13 @@
     </p>
 
     <p>
-      <b>getUser:</b> Este método pretenderá consultar a lista de utilizadores
+      <b>getUser:</b> Este método pretenderá consultar um determinado utilizador
       através do método GET, através do seu id;
+    </p>
+
+    <p>
+      <b>getUsers:</b> Este método pretenderá consultar a lista de utilizadores
+      através do método GET;
     </p>
 
     <p>
@@ -72,6 +77,11 @@
     </p>
 
     <p>
+      <b>getCategories:</b> Este método pretenderá consultar todas as categorias
+      criadas na aplicação para atribuir a transações, através do método GET;
+    </p>
+
+    <p>
       <b>doSignup:</b> Este método pretenderá criar um utilizador através do
       método POST, no qual enviará informação para os campos company_id, name,
       email, password, e role_id de administrador;
@@ -80,6 +90,11 @@
     <p>
       <b>doSignin:</b> Este método pretenderá consultar um determinado
       utilizador através do método GET, através do seu id;
+    </p>
+
+    <p>
+      <b>getCompanies:</b> Este método pretenderá consultar a listagem de todas 
+      as empresas através do método GET;
     </p>
   </body>
 </html>
