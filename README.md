@@ -1,2 +1,2 @@
 # OnboardDocs
-Documentation for Onboard web application that will be developed on Collaborative Software Development class.
+Documentation for Onboard web application that was developed on Collaborative Software Development class at @IPCA.
